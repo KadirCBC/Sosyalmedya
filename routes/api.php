@@ -7,12 +7,14 @@ use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\BusinessProfileController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\DistrictAnalyticsController;
 use App\Http\Controllers\Api\EmergencyAlertController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\MarketplaceController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentWebhookController;
+use App\Http\Controllers\Api\PollController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\ReportController;
@@ -112,6 +114,17 @@ Route::prefix('v1')->middleware([TrustCloudflareProxies::class, IpSpamDefenseMid
         });
     });
 
+    // Yerel Anket ve Oylama (Poll) Rotaları
+    Route::prefix('polls')->controller(PollController::class)->group(function () {
+        Route::get('{id}', 'show')->name('api.polls.show');
+        Route::get('{id}/card', 'card')->name('api.polls.card');
+
+        Route::middleware('auth:sanctum')->group(function () {
+            // Oy Kullanma: Dakikada max 20 etkileşim
+            Route::post('{id}/vote', 'vote')->middleware(ThrottleInteractions::class)->name('api.polls.vote');
+        });
+    });
+
     // Yorum (Comment) Rotaları
     Route::prefix('posts/{postId}/comments')->controller(CommentController::class)->group(function () {
         Route::get('/', 'index');
@@ -158,5 +171,11 @@ Route::prefix('v1')->middleware([TrustCloudflareProxies::class, IpSpamDefenseMid
     // Ödeme Webhook Rotaları (PayTR Asenkron Callback)
     Route::prefix('payment')->group(function () {
         Route::post('paytr/callback', [PaymentWebhookController::class, 'payTrCallback'])->name('payment.paytr.callback');
+    });
+
+    // Yerel Nabız & Analitik Raporlama (B2B API)
+    Route::prefix('analytics')->controller(DistrictAnalyticsController::class)->group(function () {
+        Route::get('pulse/{district_slug}', 'pulse')->name('api.analytics.pulse');
+        Route::get('districts', 'availableDistricts')->name('api.analytics.districts');
     });
 });

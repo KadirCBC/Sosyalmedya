@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\PostInteractedNotification;
 use App\Services\Audit\ActivityLogService;
 use App\Services\Moderation\ContentFilterService;
+use App\Services\Poll\PollService;
 use App\Services\Reputation\ReputationService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,8 @@ class PostService
         protected FeedService $feedService,
         protected ContentFilterService $contentFilterService,
         protected ActivityLogService $activityLogService,
-        protected ReputationService $reputationService
+        protected ReputationService $reputationService,
+        protected PollService $pollService
     ) {}
 
     /**
@@ -80,6 +82,16 @@ class PostService
             $this->feedService->clearLocalFeedCache($locationId);
         }
 
+        // Varsa Anket Oluştur (2-4 seçenekli)
+        if (! empty($data['poll']) && is_array($data['poll']) && ! empty($data['poll']['options'])) {
+            $this->pollService->createPollForPost(
+                post: $post,
+                question: (string) ($data['poll']['question'] ?? $cleanContent),
+                options: (array) $data['poll']['options'],
+                durationHours: (int) ($data['poll']['duration_hours'] ?? 24)
+            );
+        }
+
         // Yerel İtibar: Gönderi paylaşımı puanı ekle (+2 Puan)
         $this->reputationService->awardPostCreated($user->id);
 
@@ -87,6 +99,7 @@ class PostService
             'user:id,name,username,avatar_path',
             'user.reputation',
             'location:id,city,district',
+            'poll.options',
         ]);
     }
 
@@ -151,6 +164,7 @@ class PostService
             ->with([
                 'user:id,name,username,avatar_path',
                 'location:id,city,district',
+                'poll.options',
             ])
             ->findOrFail($postId);
     }

@@ -55,3 +55,11 @@ Schedule::command('ads:check-expired')
 Schedule::command('queue:prune-failed --hours=168') // 7 günlük başarısız işleri temizle
     ->weekly();
 
+// 5. Yerel Nabız & Analitik Motoru (İlçe Trendleri ve Duygu Endeksi)
+// Her saat başı son 24 saatin trend ve duygu analizini günceller
+Schedule::command('analytics:process-trends')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground();
+
+

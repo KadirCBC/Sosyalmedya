@@ -16,6 +16,24 @@
         posting: false,
         maxChars: 500,
 
+        // Yerel Anket State
+        showPollBox: false,
+        pollQuestion: '',
+        pollOptions: ['', ''],
+        pollDuration: 24,
+
+        addPollOption() {
+            if (this.pollOptions.length < 4) {
+                this.pollOptions.push('');
+            }
+        },
+
+        removePollOption(index) {
+            if (this.pollOptions.length > 2) {
+                this.pollOptions.splice(index, 1);
+            }
+        },
+
         // Liderlik Tablosu (Haftanın Komşuları) State
         showLeaderboardModal: false,
         leaderboard: [],
@@ -113,6 +131,21 @@
                 formData.append(`images[${index}]`, file);
             });
 
+            // Anket Eklendiyse Doğrula ve Ekle
+            if (this.showPollBox) {
+                const validOptions = this.pollOptions.map(o => o.trim()).filter(o => o.length > 0);
+                if (validOptions.length < 2) {
+                    $dispatch('toast', 'Anket için en az 2 seçenek doldurmalısınız.');
+                    this.posting = false;
+                    return;
+                }
+                formData.append('poll[question]', this.pollQuestion.trim() || this.content.trim());
+                formData.append('poll[duration_hours]', this.pollDuration);
+                validOptions.forEach((opt, idx) => {
+                    formData.append(`poll[options][${idx}]`, opt);
+                });
+            }
+
             try {
                 const res = await fetch('/api/v1/posts', {
                     method: 'POST',
@@ -129,6 +162,10 @@
                     this.content = '';
                     this.selectedFiles = [];
                     this.previewUrls = [];
+                    this.showPollBox = false;
+                    this.pollQuestion = '';
+                    this.pollOptions = ['', ''];
+                    this.pollDuration = 24;
                     // Yeni gönderiyi listenin başına ekle
                     if (data.post) {
                         this.posts.unshift(data.post);
@@ -156,6 +193,12 @@
                             class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
                         <span>🏆 Komşular</span>
                     </button>
+                    <!-- Yerel Nabız & Trend Analitiği Butonu -->
+                    <a href="{{ route('analytics.pulse') }}"
+                       class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
+                       title="İlçe Gündemi ve Memnuniyet Analitiği">
+                        <span>📊 Nabız</span>
+                    </a>
                     <!-- Esnaf Reklam Sihirbazı Butonu -->
                     <a href="{{ route('ads.create') }}"
                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors">
@@ -245,6 +288,52 @@
                         </div>
                     </template>
 
+                    <!-- Anket Formu (Expandable) -->
+                    <div x-show="showPollBox" x-cloak class="my-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                                📊 Yerel Anket Oluştur
+                            </span>
+                            <button @click="showPollBox = false" type="button" class="text-xs text-slate-400 hover:text-rose-500 transition-colors">
+                                İptal ✕
+                            </button>
+                        </div>
+                        <input x-model="pollQuestion"
+                               type="text"
+                               placeholder="Anket sorusu (boş bırakılırsa gönderi metni kullanılır)"
+                               class="w-full text-xs px-3 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500 outline-none">
+                        <div class="space-y-1.5">
+                            <template x-for="(opt, idx) in pollOptions" :key="idx">
+                                <div class="flex items-center gap-1.5">
+                                    <input x-model="pollOptions[idx]"
+                                           type="text"
+                                           :placeholder="`Seçenek ${idx + 1}`"
+                                           class="flex-1 text-xs px-3 py-1.5 rounded-xl bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500 outline-none">
+                                    <button x-show="pollOptions.length > 2"
+                                            @click="removePollOption(idx)"
+                                            type="button"
+                                            class="p-1 text-slate-400 hover:text-rose-500 text-xs">✕</button>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="flex items-center justify-between pt-1">
+                            <button x-show="pollOptions.length < 4"
+                                    @click="addPollOption()"
+                                    type="button"
+                                    class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                                + Seçenek Ekle (Maks 4)
+                            </button>
+                            <div class="flex items-center gap-1.5 text-[11px] text-slate-500">
+                                <span>Süre:</span>
+                                <select x-model="pollDuration" class="bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-300">
+                                    <option value="24">24 Saat</option>
+                                    <option value="72">3 Gün</option>
+                                    <option value="168">7 Gün</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Alt Kontroller: Kapsam Seçici, Görsel Butonu, Sayaç ve Paylaş Butonu -->
                     <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-neutral-800/60 mt-2">
                         <div class="flex items-center gap-2">
@@ -255,6 +344,15 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                 </svg>
                             </label>
+
+                            <!-- Anket Açma Butonu -->
+                            <button type="button"
+                                    @click="showPollBox = !showPollBox"
+                                    :class="showPollBox ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300' : 'text-slate-500 hover:text-blue-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'"
+                                    class="p-2 rounded-full transition-colors"
+                                    title="Yerel anket ekle">
+                                <span class="text-sm">📊</span>
+                            </button>
 
                             <!-- Kapsam Seçici Toggle: Mahallem / Genel -->
                             <div class="inline-flex items-center p-0.5 rounded-full bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-xs">
@@ -350,6 +448,78 @@
 
                                 <!-- İçerik -->
                                 <p class="text-[15px] leading-relaxed text-slate-800 dark:text-neutral-200 whitespace-pre-line break-words mb-3" x-text="post.content"></p>
+
+                                <!-- Varsa Yerel Anket & Oylama (Dinamik) -->
+                                <template x-if="post.poll">
+                                    <div class="my-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-neutral-900/90 border border-slate-200 dark:border-neutral-800 shadow-sm">
+                                        <div class="flex items-center justify-between mb-2.5">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                                📊 Yerel Anket
+                                            </span>
+                                            <div class="flex items-center gap-1.5">
+                                                <button @click="window.open(`/polls/${post.poll.id}/card`, '_blank')"
+                                                        type="button"
+                                                        class="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5">
+                                                    <span>İnfografik</span> ↗
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-2.5" x-text="post.poll.question"></h4>
+                                        <div class="space-y-1.5">
+                                            <template x-for="opt in post.poll.options" :key="opt.id">
+                                                <div>
+                                                    <template x-if="post.poll.show_results">
+                                                        <div class="relative overflow-hidden rounded-xl border p-2 text-xs"
+                                                             :class="opt.is_user_vote ? 'border-blue-500 bg-blue-50/60 dark:bg-blue-950/30' : 'border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-800/40'">
+                                                            <div class="absolute inset-y-0 left-0 bg-blue-500 opacity-20 transition-all duration-500 rounded-l-xl"
+                                                                 :style="`width: ${opt.percentage}%`"></div>
+                                                            <div class="relative z-10 flex items-center justify-between gap-2">
+                                                                <div class="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
+                                                                    <span x-text="opt.option_text"></span>
+                                                                    <span x-show="opt.is_user_vote" class="text-[10px] px-1 bg-blue-600 text-white rounded font-bold">✓ Oyunuz</span>
+                                                                </div>
+                                                                <span class="font-mono font-bold" x-text="`%${opt.percentage} (${opt.votes_count} oy)`"></span>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="!post.poll.show_results">
+                                                        <button @click="
+                                                            fetch(`/api/v1/polls/${post.poll.id}/vote`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                                                },
+                                                                body: JSON.stringify({ option_id: opt.id })
+                                                            }).then(r => r.json()).then(d => {
+                                                                if (d.success) {
+                                                                    post.poll = d.poll;
+                                                                    $dispatch('toast', 'Oyunuz kaydedildi! 🗳️');
+                                                                } else {
+                                                                    $dispatch('toast', d.message || 'Hata oluştu.');
+                                                                }
+                                                            });
+                                                        "
+                                                        type="button"
+                                                        class="w-full text-left py-2 px-3 rounded-xl border border-blue-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors flex items-center justify-between">
+                                                            <span x-text="opt.option_text"></span>
+                                                            <span class="text-blue-500 text-[11px] font-bold">Oy Ver →</span>
+                                                        </button>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-neutral-800/60 flex items-center justify-between text-[11px] text-slate-400">
+                                            <span x-text="`${post.poll.total_votes} oy • ${post.poll.is_expired ? 'Oylama kapandı' : post.poll.expires_at_human + ' sona eriyor'}`"></span>
+                                            <div class="flex items-center gap-2">
+                                                <button @click="window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.poll.question)}&url=${encodeURIComponent(window.location.origin + '/polls/' + post.poll.id + '/card')}`, '_blank')"
+                                                        class="text-sky-500 hover:underline">X'te Paylaş</button>
+                                                <button @click="window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(post.poll.question + ' ' + window.location.origin + '/polls/' + post.poll.id + '/card')}`, '_blank')"
+                                                        class="text-emerald-500 hover:underline">WhatsApp</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
 
                                 <!-- Medya Galerisi -->
                                 <template x-if="post.media_urls && post.media_urls.length > 0">

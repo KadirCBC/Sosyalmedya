@@ -46,6 +46,32 @@ class CreatePostRequest extends FormRequest
                 'mimes:jpeg,png,jpg,webp',
                 'max:10240', // Maksimum 10MB
             ],
+            'poll' => [
+                'nullable',
+                'array',
+            ],
+            'poll.question' => [
+                'required_with:poll',
+                'string',
+                'max:255',
+            ],
+            'poll.options' => [
+                'required_with:poll',
+                'array',
+                'min:2',
+                'max:4',
+            ],
+            'poll.options.*' => [
+                'required',
+                'string',
+                'max:100',
+            ],
+            'poll.duration_hours' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:168',
+            ],
         ];
     }
 

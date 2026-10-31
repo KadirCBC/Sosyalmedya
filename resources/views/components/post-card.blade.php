@@ -97,6 +97,11 @@
                 {{ $post['content'] ?? '' }}
             </p>
 
+            <!-- Varsa Yerel Anket & Oylama Kartı -->
+            @if(!empty($post['poll']))
+                <x-poll-card :poll="$post['poll']" />
+            @endif
+
             <!-- Medya Galerisi (Tekli, 2'li veya 4'lü Grid) -->
             @if(!empty($post['media_urls']) && is_array($post['media_urls']))
                 @php $mediaCount = count($post['media_urls']); @endphp

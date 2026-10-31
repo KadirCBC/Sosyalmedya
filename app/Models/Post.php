@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[ScopedBy([NotBlockedScope::class])]
 class Post extends Model
@@ -79,6 +80,16 @@ class Post extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    /**
+     * Gönderiye bağlı anket (varsa).
+     *
+     * @return HasOne<Poll>
+     */
+    public function poll(): HasOne
+    {
+        return $this->hasOne(Poll::class);
     }
 
     /**

@@ -5,8 +5,10 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\AdAdminController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ModerationController;
+use App\Http\Controllers\Api\PollController;
 use App\Http\Controllers\Web\AdWizardController;
 use App\Http\Controllers\Web\BusinessWebController;
+use App\Http\Controllers\Web\DistrictAnalyticsWebController;
 use App\Http\Controllers\Web\EmergencyWebController;
 use App\Http\Controllers\Web\FeedWebController;
 use App\Http\Controllers\Web\MarketplaceWebController;
@@ -28,6 +30,7 @@ Route::get('/posts/{id}', [FeedWebController::class, 'showPost'])->name('posts.s
 // Dinamik SEO ve Sosyal Paylaşım Rotaları
 Route::get('/yerel/{citySlug}/{districtSlug}', [SeoController::class, 'localLandingPage'])->name('seo.district');
 Route::get('/posts/{id}/og-image', [SeoController::class, 'ogImage'])->name('posts.og-image');
+Route::get('/polls/{id}/card', [PollController::class, 'card'])->name('polls.card');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 // Esnaf Self-Service Reklam Sihirbazı Rotaları
@@ -60,6 +63,12 @@ Route::prefix('business')->controller(BusinessWebController::class)->group(funct
     Route::get('/{id}/subscription', 'subscription')->name('business.subscription');
     Route::get('/{id}/subscription/mock', 'subscriptionMock')->name('business.subscription.mock');
 });
+
+// Yerel Nabız & Analitik Panosu (B2B / Kurumsal Görünüm)
+Route::prefix('analytics')->controller(DistrictAnalyticsWebController::class)->group(function () {
+    Route::get('/pulse/{districtSlug?}', 'pulse')->name('analytics.pulse');
+});
+
 
 // Yönetim ve Moderasyon Paneli Rotaları
 Route::prefix('admin')->middleware(['auth', EnsureAdminOrModerator::class])->group(function () {

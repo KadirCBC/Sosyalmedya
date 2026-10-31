@@ -7,6 +7,7 @@ namespace App\Http\Resources;
 use App\Enums\PostScope;
 use App\Models\Post;
 use App\Services\MediaService;
+use App\Services\Poll\PollService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -39,6 +40,10 @@ class PostResource extends JsonResource
             $isLiked = $this->likes()->where('user_id', $request->user('sanctum')->id)->exists();
         }
 
+        /** @var PollService $pollService */
+        $pollService = app(PollService::class);
+        $pollData = $this->poll ? $pollService->formatPollData($this->poll, $request->user('sanctum')) : null;
+
         return [
             'id' => $this->id,
             'content' => $this->content,
@@ -47,6 +52,7 @@ class PostResource extends JsonResource
             'comments_count' => (int) $this->comments_count,
             'media_urls' => $mediaUrls,
             'is_liked' => $isLiked,
+            'poll' => $pollData,
             'user' => [
                 'id' => $this->user?->id,
                 'name' => $this->user?->name,

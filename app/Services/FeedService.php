@@ -56,6 +56,7 @@ class FeedService
                 'user:id,name,username,avatar_path',
                 'user.reputation',
                 'location:id,city,district',
+                'poll.options',
             ]);
 
         if ($authUserId !== null) {
@@ -105,6 +106,7 @@ class FeedService
                 'user:id,name,username,avatar_path',
                 'user.reputation',
                 'location:id,city,district',
+                'poll.options',
             ]);
 
         if ($authUserId !== null) {
@@ -137,6 +139,7 @@ class FeedService
                 'user:id,name,username,avatar_path',
                 'user.reputation',
                 'location:id,city,district',
+                'poll.options',
             ])
             ->withExists([
                 'likes as is_liked' => fn ($q) => $q->where('user_id', $user->id),
