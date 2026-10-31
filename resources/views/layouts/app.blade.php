@@ -4,7 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Sosyal Medya - Yerel ve Genel Çift Akış' }}</title>
+    <title>{{ $title ?? 'Meydan - Yerel ve Genel Çift Akışlı Sosyal Ağ' }}</title>
+
+    <!-- Dinamik OpenGraph (WhatsApp, Facebook, Telegram) Meta Etiketleri -->
+    <meta property="og:site_name" content="Meydan">
+    <meta property="og:type" content="{{ $ogType ?? 'website' }}">
+    <meta property="og:title" content="{{ $ogTitle ?? ($title ?? 'Meydan - Yerel ve Genel Çift Akışlı Sosyal Ağ') }}">
+    <meta property="og:description" content="{{ $ogDescription ?? 'Mahallende ve genel akışta neler olup bittiğini anında öğren ve paylaş.' }}">
+    <meta property="og:image" content="{{ $ogImage ?? 'https://pub-your-id.r2.dev/assets/meydan-og-banner.jpg' }}">
+    <meta property="og:url" content="{{ $ogUrl ?? url()->current() }}">
+
+    <!-- Dinamik Twitter Card (X Paylaşım Önizlemesi) -->
+    <meta name="twitter:card" content="{{ $twitterCard ?? 'summary_large_image' }}">
+    <meta name="twitter:title" content="{{ $ogTitle ?? ($title ?? 'Meydan') }}">
+    <meta name="twitter:description" content="{{ $ogDescription ?? 'Mahallende ve genel akışta neler olup bittiğini anında öğren.' }}">
+    <meta name="twitter:image" content="{{ $ogImage ?? 'https://pub-your-id.r2.dev/assets/meydan-og-banner.jpg' }}">
 
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 // Kullanıcı Arayüzü
 Route::get('/', [FeedWebController::class, 'index'])->name('home');
 Route::get('/feed', [FeedWebController::class, 'index'])->name('feed');
+Route::get('/posts/{id}', [FeedWebController::class, 'showPost'])->name('posts.show');
 
 // Yönetim ve Moderasyon Paneli Rotaları
 Route::prefix('admin')->middleware(['auth', EnsureAdminOrModerator::class])->group(function () {

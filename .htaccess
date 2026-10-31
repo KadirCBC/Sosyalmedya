@@ -1,0 +1,26 @@
+# ==============================================================================
+# cPanel Paylaşımlı Hosting Kök Dizin .htaccess Yapılandırması
+# Bu dosya, Document Root'un public klasörüne değiştirilemediği cPanel ortamlarında
+# tüm trafiği güvenle /public klasörüne yönlendirir ve sistem dosyalarını kilitler.
+# ==============================================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Kritik Laravel dosyalarına webden doğrudan erişimi kesin olarak engelle (403 Forbidden)
+    RewriteRule ^\.env - [F,L,NC]
+    RewriteRule ^artisan - [F,L,NC]
+    RewriteRule ^composer\.(json|lock) - [F,L,NC]
+    RewriteRule ^package(-lock)?\.json - [F,L,NC]
+    RewriteRule ^(\.git|\.github|\.editorconfig|\.gitattributes) - [F,L,NC]
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage/logs|tests|vendor)(/.*)?$ - [F,L,NC]
+
+    # 2. Authorization Header'ı (Sanctum Token'larının iletilmesi için)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # 3. Tüm trafiği /public klasörüne sessizce yönlendir
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
