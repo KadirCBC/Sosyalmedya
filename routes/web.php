@@ -10,6 +10,7 @@ use App\Http\Controllers\Web\AdWizardController;
 use App\Http\Controllers\Web\BusinessWebController;
 use App\Http\Controllers\Web\DistrictAnalyticsWebController;
 use App\Http\Controllers\Web\EmergencyWebController;
+use App\Http\Controllers\Web\EventWebController;
 use App\Http\Controllers\Web\FeedWebController;
 use App\Http\Controllers\Web\MarketplaceWebController;
 use App\Http\Controllers\Web\SeoController;
@@ -53,6 +54,13 @@ Route::prefix('marketplace')->controller(MarketplaceWebController::class)->group
 Route::prefix('emergency')->controller(EmergencyWebController::class)->group(function () {
     Route::get('/create', 'create')->name('emergency.create');
     Route::get('/{id}', 'show')->name('emergency.show');
+});
+
+// Yerel Etkinlik ve Buluşma Takvimi Rotaları
+Route::prefix('events')->controller(EventWebController::class)->group(function () {
+    Route::get('/', 'index')->name('events.index');
+    Route::get('/create', 'create')->name('events.create');
+    Route::get('/{id}', 'show')->name('events.show');
 });
 
 // Esnaf İşletme Sayfası Rotaları

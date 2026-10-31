@@ -62,4 +62,12 @@ Schedule::command('analytics:process-trends')
     ->withoutOverlapping()
     ->runInBackground();
 
+// 6. Yerel Etkinlik Hatırlatıcı (Her 15 Dakikada Bir)
+// Başlamasına 2 saat kalan etkinlik katılımcılarına Database + WebPush hatırlatması basar
+Schedule::command('events:send-reminders')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();
+
+
 

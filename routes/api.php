@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\DistrictAnalyticsController;
 use App\Http\Controllers\Api\EmergencyAlertController;
+use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\MarketplaceController;
@@ -67,6 +68,18 @@ Route::prefix('v1')->middleware([TrustCloudflareProxies::class, IpSpamDefenseMid
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', 'store');
             Route::post('/{id}/status', 'updateStatus');
+        });
+    });
+
+    // Yerel Etkinlik ve Buluşma Takvimi Rotaları
+    Route::prefix('events')->controller(EventController::class)->group(function () {
+        Route::get('/', 'index')->name('api.events.index');
+        Route::get('/weekend', 'weekend')->name('api.events.weekend');
+        Route::get('/{id}', 'show')->name('api.events.show');
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/', 'store')->name('api.events.store');
+            Route::post('/{id}/attend', 'attend')->name('api.events.attend');
         });
     });
 

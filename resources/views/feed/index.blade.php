@@ -253,6 +253,13 @@
                     <span>🏪</span>
                     <span>Esnaf</span>
                 </a>
+
+                <!-- 5. Sekme: Mahalle Etkinlikleri -->
+                <a href="{{ route('events.index') }}"
+                   class="flex-1 py-3 text-sm font-bold text-slate-400 dark:text-neutral-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-neutral-900/40 transition-colors flex items-center justify-center gap-1.5">
+                    <span>📅</span>
+                    <span>Etkinlik</span>
+                </a>
             </nav>
         </header>
 
@@ -395,6 +402,9 @@
                 </div>
             </div>
         </section>
+
+        <!-- 🌟 Bu Hafta Sonu Mahallede Ne Var? Etkinlik Widget'ı -->
+        <x-weekend-events-widget :locationId="$locationId ?? 1" :districtName="$districtName ?? 'Mahalleniz'" />
 
         <!-- 3. Feed Alanı: Dinamik Post Kartları + Sponsorlu Kartlar -->
         <section class="divide-y divide-slate-100 dark:divide-neutral-900">
