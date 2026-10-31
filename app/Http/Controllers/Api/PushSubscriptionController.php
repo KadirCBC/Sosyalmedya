@@ -70,3 +70,4 @@ class PushSubscriptionController extends Controller
         ], Response::HTTP_OK);
     }
 }
+

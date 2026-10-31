@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\PostInteractedNotification;
 use App\Services\Audit\ActivityLogService;
 use App\Services\Moderation\ContentFilterService;
+use App\Services\Reputation\ReputationService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +21,8 @@ class PostService
         protected MediaService $mediaService,
         protected FeedService $feedService,
         protected ContentFilterService $contentFilterService,
-        protected ActivityLogService $activityLogService
+        protected ActivityLogService $activityLogService,
+        protected ReputationService $reputationService
     ) {}
 
     /**
@@ -78,8 +80,12 @@ class PostService
             $this->feedService->clearLocalFeedCache($locationId);
         }
 
+        // Yerel İtibar: Gönderi paylaşımı puanı ekle (+2 Puan)
+        $this->reputationService->awardPostCreated($user->id);
+
         return $post->load([
             'user:id,name,username,avatar_path',
+            'user.reputation',
             'location:id,city,district',
         ]);
     }
@@ -119,9 +125,14 @@ class PostService
             // Güncel sayacı veritabanından tazele
             $post->refresh();
 
-            // Gönderi sahibi kendisi değilse ve yeni beğeni ise bildirim gönder
+            // Gönderi sahibi kendisi değilse ve yeni beğeni ise bildirim gönder ve itibar puanı ekle
             if ($isLiked && $post->user_id !== $user->id) {
                 $post->user->notify(new PostInteractedNotification($user, $post, 'like'));
+
+                // Eğer beğenen kişi gönderiyle aynı ilçedeyse yerel itibar puanı ver (+5 Puan)
+                if ($user->location_id && ((int) $user->location_id === (int) $post->location_id || (int) $user->location_id === (int) $post->user->location_id)) {
+                    $this->reputationService->awardLocalLike($post->user_id, $user->name);
+                }
             }
 
             return [

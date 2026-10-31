@@ -45,7 +45,13 @@ Schedule::command('simulate:local-trends --time=evening')
     ->withoutOverlapping()
     ->runInBackground();
 
-// 3. Veritabanı Temizliği ve 5651 Log Bakımı
+// 3. Reklam Kampanya Bitiş Kontrolü & Esnafa Sonuç SMS'i Gönderimi (Her Saat Başı)
+Schedule::command('ads:check-expired')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground();
+
+// 4. Veritabanı Temizliği ve 5651 Log Bakımı
 Schedule::command('queue:prune-failed --hours=168') // 7 günlük başarısız işleri temizle
     ->weekly();
 

@@ -18,6 +18,7 @@ class Ad extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'merchant_oid',
         'user_id',
         'location_id',
         'title',
@@ -25,12 +26,18 @@ class Ad extends Model
         'image_url',
         'cta_text',
         'cta_url',
+        'cta_type',
         'status',
         'budget',
+        'duration_days',
+        'daily_budget',
+        'paid_amount',
+        'payment_method',
         'impressions_count',
         'clicks_count',
         'starts_at',
         'ends_at',
+        'reported_at',
     ];
 
     /**
@@ -41,10 +48,14 @@ class Ad extends Model
         return [
             'status' => AdStatus::class,
             'budget' => 'decimal:2',
+            'daily_budget' => 'decimal:2',
+            'paid_amount' => 'decimal:2',
+            'duration_days' => 'integer',
             'impressions_count' => 'integer',
             'clicks_count' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
+            'reported_at' => 'datetime',
         ];
     }
 

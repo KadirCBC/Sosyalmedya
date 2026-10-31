@@ -54,6 +54,7 @@ class FeedService
             ->orderByDesc('id')
             ->with([
                 'user:id,name,username,avatar_path',
+                'user.reputation',
                 'location:id,city,district',
             ]);
 
@@ -102,6 +103,7 @@ class FeedService
             ->orderByDesc('id')
             ->with([
                 'user:id,name,username,avatar_path',
+                'user.reputation',
                 'location:id,city,district',
             ]);
 
@@ -133,6 +135,7 @@ class FeedService
             ->orderByDesc('id')
             ->with([
                 'user:id,name,username,avatar_path',
+                'user.reputation',
                 'location:id,city,district',
             ])
             ->withExists([

@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\Report;
 use App\Models\User;
 use App\Services\FeedService;
+use App\Services\Reputation\ReputationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,7 +18,8 @@ use Illuminate\View\View;
 class ModerationController extends Controller
 {
     public function __construct(
-        protected FeedService $feedService
+        protected FeedService $feedService,
+        protected ReputationService $reputationService
     ) {}
 
     /**
@@ -106,6 +108,9 @@ class ModerationController extends Controller
 
         $post->update(['is_hidden' => true]);
 
+        // İtibar Cezası: Şikayet onaylanıp içerik gizlendiğinde -50 Puan
+        $this->reputationService->penalizeViolation($post->user_id, 'Gönderi moderasyonca akıştan gizlendi');
+
         Report::query()
             ->where('reportable_type', Post::class)
             ->where('reportable_id', $post->id)
@@ -147,6 +152,9 @@ class ModerationController extends Controller
 
         $post->delete();
 
+        // İtibar Cezası: Şikayetli içerik kalıcı olarak silindiğinde -50 Puan
+        $this->reputationService->penalizeViolation($post->user_id, 'İhlalli gönderi kalıcı olarak silindi');
+
         if ($locationId !== null) {
             $this->feedService->clearLocalFeedCache($locationId);
         }
@@ -174,6 +182,9 @@ class ModerationController extends Controller
         $targetUser->update([
             'suspended_until' => now()->addHours(24),
         ]);
+
+        // İtibar Cezası: Hesap askıya alındığında -100 Puan
+        $this->reputationService->penalizeSuspension($targetUser->id);
 
         return back()->with('success', "{$targetUser->name} (@{$targetUser->username}) 24 saat süreyle askıya alındı.");
     }

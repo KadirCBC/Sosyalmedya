@@ -16,6 +16,27 @@
         posting: false,
         maxChars: 500,
 
+        // Liderlik Tablosu (Haftanın Komşuları) State
+        showLeaderboardModal: false,
+        leaderboard: [],
+        loadingLeaderboard: false,
+
+        async openLeaderboard() {
+            this.showLeaderboardModal = true;
+            this.loadingLeaderboard = true;
+            try {
+                const res = await fetch(`/api/v1/locations/${this.locationId}/leaderboard`);
+                const data = await res.json();
+                if (data.success) {
+                    this.leaderboard = data.leaderboard;
+                }
+            } catch (err) {
+                console.error('Liderlik tablosu hatası:', err);
+            } finally {
+                this.loadingLeaderboard = false;
+            }
+        },
+
         get remainingChars() {
             return this.maxChars - this.content.length;
         },
@@ -129,11 +150,23 @@
                 <div class="flex items-center gap-2">
                     <span class="text-xl font-black tracking-tight text-blue-600 dark:text-blue-500">Meydan</span>
                 </div>
-                <!-- Gece / Gündüz Modu Butonu -->
-                <button @click="darkMode = !darkMode" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-500 dark:text-neutral-400 transition-colors">
-                    <span x-show="darkMode">☀️</span>
-                    <span x-show="!darkMode">🌙</span>
-                </button>
+                <div class="flex items-center gap-2">
+                    <!-- Haftanın Komşuları Liderlik Butonu -->
+                    <button @click="openLeaderboard()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
+                        <span>🏆 Komşular</span>
+                    </button>
+                    <!-- Esnaf Reklam Sihirbazı Butonu -->
+                    <a href="{{ route('ads.create') }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors">
+                        <span>⚡ Reklam Ver</span>
+                    </a>
+                    <!-- Gece / Gündüz Modu Butonu -->
+                    <button @click="darkMode = !darkMode" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-500 dark:text-neutral-400 transition-colors">
+                        <span x-show="darkMode">☀️</span>
+                        <span x-show="!darkMode">🌙</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Sekme Seçici: [Bölgem] - [Genel Akış] -->
@@ -266,6 +299,20 @@
                                     <div class="flex items-center gap-1.5 flex-wrap leading-tight">
                                         <span class="font-bold text-[15px] text-slate-900 dark:text-white truncate" x-text="post.user ? post.user.name : 'Anonim'"></span>
                                         <span class="text-xs text-slate-500 dark:text-neutral-400" x-text="'@' + (post.user ? post.user.username : 'user')"></span>
+                                        <!-- Dinamik İtibar Rozeti -->
+                                        <template x-if="post.user && post.user.reputation">
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 tracking-tight select-none"
+                                                  :class="{
+                                                      'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-300/60 dark:border-amber-800/60': post.user.reputation.level === 'Gönüllü Muhtar',
+                                                      'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-300/60 dark:border-emerald-800/60': post.user.reputation.level === 'Mahalle Esnafı',
+                                                      'bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border-blue-300/60 dark:border-blue-800/60': post.user.reputation.level === 'Mahalle Sakini',
+                                                      'bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border-slate-300/60 dark:border-neutral-700/60': post.user.reputation.level === 'Yeni Komşu'
+                                                  }">
+                                                <span x-text="post.user.reputation.badge_icon || '🌱'"></span>
+                                                <span x-text="post.user.reputation.level"></span>
+                                                <span class="opacity-60 font-mono" x-text="'(' + post.user.reputation.points + 'p)'"></span>
+                                            </span>
+                                        </template>
                                         <span class="text-xs text-slate-400 dark:text-neutral-500">·</span>
                                         <time class="text-xs text-slate-500 dark:text-neutral-400" x-text="post.created_at_human || 'Az önce'"></time>
                                     </div>
@@ -369,6 +416,96 @@
 
         <div x-show="!hasMore && posts.length > 0" class="py-10 text-center text-xs text-slate-400 dark:text-neutral-600 border-t border-slate-100 dark:border-neutral-900" x-cloak>
             🎉 Şimdilik tüm akışı gördünüz.
+        </div>
+
+        <!-- 5. Haftanın Komşuları (Liderlik Tablosu) Modal Penceresi -->
+        <div x-show="showLeaderboardModal" x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+
+            <div @click.away="showLeaderboardModal = false"
+                 class="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+                
+                <!-- Modal Başlığı -->
+                <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 via-transparent to-amber-500/10">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-2xl">🏆</span>
+                        <div>
+                            <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Haftanın Komşuları</h3>
+                            <p class="text-xs text-slate-500 dark:text-neutral-400" x-text="`${districtName} Liderlik Tablosu`"></p>
+                        </div>
+                    </div>
+                    <button @click="showLeaderboardModal = false" class="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 transition">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Liderlik Listesi -->
+                <div class="p-4 overflow-y-auto space-y-2 flex-1">
+                    <template x-if="loadingLeaderboard">
+                        <div class="py-12 text-center text-slate-400">
+                            <span class="animate-spin inline-block w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full mb-2"></span>
+                            <div class="text-xs">Komşular yükleniyor...</div>
+                        </div>
+                    </template>
+
+                    <template x-if="!loadingLeaderboard && leaderboard.length === 0">
+                        <div class="py-12 text-center text-slate-400 text-xs">
+                            🌱 Henüz bu ilçede itibar puanı alan komşu bulunmuyor. İlk sen ol!
+                        </div>
+                    </template>
+
+                    <template x-for="item in leaderboard" :key="item.user_id">
+                        <div class="p-3 rounded-xl border border-slate-100 dark:border-neutral-800/80 bg-slate-50/50 dark:bg-neutral-950/40 flex items-center justify-between gap-3 transition hover:border-indigo-200 dark:hover:border-indigo-900/60">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <!-- Sıralama Rozeti -->
+                                <div class="w-6 text-center font-black text-sm shrink-0"
+                                     :class="{
+                                         'text-amber-500 text-base': item.rank === 1,
+                                         'text-slate-400': item.rank === 2,
+                                         'text-amber-700 dark:text-amber-600': item.rank === 3,
+                                         'text-slate-400 dark:text-neutral-600 font-mono text-xs': item.rank > 3
+                                     }">
+                                    <span x-show="item.rank === 1">🥇</span>
+                                    <span x-show="item.rank === 2">🥈</span>
+                                    <span x-show="item.rank === 3">🥉</span>
+                                    <span x-show="item.rank > 3" x-text="'#' + item.rank"></span>
+                                </div>
+
+                                <!-- Kullanıcı Bilgisi -->
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5 truncate">
+                                        <span class="font-bold text-sm text-slate-900 dark:text-white truncate" x-text="item.name"></span>
+                                        <span class="text-[11px] text-slate-400" x-text="'@' + item.username"></span>
+                                    </div>
+                                    <div class="mt-0.5 flex items-center gap-1">
+                                        <span class="text-[10px] font-semibold text-slate-500 dark:text-neutral-400 flex items-center gap-1">
+                                            <span x-text="item.badge_icon"></span>
+                                            <span x-text="item.level"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Puan Rozeti -->
+                            <div class="text-right shrink-0">
+                                <span class="px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-black text-xs font-mono border border-indigo-200 dark:border-indigo-900/60"
+                                      x-text="item.points + ' Puan'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Bilgilendirme Altlığı -->
+                <div class="p-3 bg-slate-50 dark:bg-neutral-800/50 border-t border-slate-100 dark:border-neutral-800 text-[11px] text-slate-500 dark:text-neutral-400 text-center">
+                    💡 Mahallenizde beğeni alıp faydalı içerikler üreterek puan kazanabilir, <strong>Gönüllü Muhtar</strong> unvanına yükselebilirsiniz.
+                </div>
+            </div>
         </div>
     </div>
 </x-app-layout>

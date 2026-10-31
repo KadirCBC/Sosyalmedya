@@ -33,6 +33,7 @@
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <span class="font-bold text-xs text-slate-900 dark:text-white">{{ $comment['user']['name'] ?? 'Kullanıcı' }}</span>
                             <span class="text-[11px] text-slate-400">{{ '@' . ($comment['user']['username'] ?? 'user') }}</span>
+                            <x-reputation-badge :reputation="$comment['user']['reputation'] ?? null" />
                             <span class="text-[11px] text-slate-400">·</span>
                             <span class="text-[11px] text-slate-400">{{ $comment['created_at_human'] ?? '' }}</span>
                         </div>

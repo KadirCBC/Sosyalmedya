@@ -14,6 +14,15 @@
     <meta property="og:image" content="{{ $ogImage ?? 'https://pub-your-id.r2.dev/assets/meydan-og-banner.jpg' }}">
     <meta property="og:url" content="{{ $ogUrl ?? url()->current() }}">
 
+    <!-- PWA & Mobil Kurulum Meta Etiketleri -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Meydan">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.svg">
+
     <!-- Dinamik Twitter Card (X Paylaşım Önizlemesi) -->
     <meta name="twitter:card" content="{{ $twitterCard ?? 'summary_large_image' }}">
     <meta name="twitter:title" content="{{ $ogTitle ?? ($title ?? 'Meydan') }}">
@@ -76,10 +85,11 @@
 </head>
 <body class="h-full flex flex-col font-sans" x-data="{ darkMode: true }" :class="{ 'dark': darkMode }">
 
-    <!-- Ana Çerçeve (Mobile-First / Max-w-2xl merkezli) -->
+    <!-- Ana Çerçeve (Mobile-First / Max-w-2xl merkezli veya genişletilebilir) -->
     <div class="min-h-full flex justify-center bg-slate-100 dark:bg-black">
-        <main class="w-full max-w-[620px] min-h-screen bg-white dark:bg-black border-x border-slate-200 dark:border-neutral-800 flex flex-col pb-20 sm:pb-8 shadow-sm">
-            {{ $slot }}
+        <main class="w-full {{ $maxWidth ?? 'max-w-[620px]' }} min-h-screen bg-white dark:bg-black border-x border-slate-200 dark:border-neutral-800 flex flex-col pb-20 sm:pb-8 shadow-sm">
+            {{ $slot ?? '' }}
+            @yield('content')
         </main>
     </div>
 
@@ -101,6 +111,109 @@
         <span x-text="message"></span>
     </div>
 
+    <!-- PWA Tek Tıkla Yükleme Barı (Install Prompt) -->
+    <div x-data="{
+             deferredPrompt: null,
+             showInstallBanner: false,
+             init() {
+                 window.addEventListener('beforeinstallprompt', (e) => {
+                     e.preventDefault();
+                     this.deferredPrompt = e;
+                     // Daha önce kapatılmadıysa göster
+                     if (!localStorage.getItem('pwa_prompt_dismissed')) {
+                         this.showInstallBanner = true;
+                     }
+                 });
+             },
+             async installPwa() {
+                 if (!this.deferredPrompt) return;
+                 this.deferredPrompt.prompt();
+                 const { outcome } = await this.deferredPrompt.userChoice;
+                 if (outcome === 'accepted') {
+                     this.showInstallBanner = false;
+                 }
+                 this.deferredPrompt = null;
+             },
+             dismissBanner() {
+                 this.showInstallBanner = false;
+                 localStorage.setItem('pwa_prompt_dismissed', 'true');
+             }
+         }"
+         x-show="showInstallBanner"
+         x-cloak
+         class="fixed bottom-0 inset-x-0 z-50 p-3 bg-slate-900/95 dark:bg-neutral-900/95 border-t border-slate-800 text-white shadow-2xl backdrop-blur-md">
+        <div class="max-w-md mx-auto flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <img src="/icons/icon-192x192.svg" class="w-10 h-10 rounded-xl shadow-md">
+                <div>
+                    <h4 class="text-xs font-bold leading-tight">Meydan'ı Telefona Yükle</h4>
+                    <p class="text-[11px] text-slate-400">Uygulama mağazası olmadan tek tıkla ana ekrana ekle.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button @click="dismissBanner()" class="text-slate-400 hover:text-white text-xs px-2 py-1">Sonra</button>
+                <button @click="installPwa()" class="px-3.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 font-bold text-xs shadow-md transition-colors">
+                    Yükle
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PWA Service Worker & WebPush Kayıt Betiği -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('Meydan PWA Service Worker aktif:', registration.scope);
+
+                    // WebPush Abonelik Kontrolü
+                    if ('PushManager' in window && 'Notification' in window && Notification.permission === 'granted') {
+                        syncPushSubscription(registration);
+                    }
+                } catch (err) {
+                    console.warn('Service Worker kaydı yapılamadı:', err);
+                }
+            });
+        }
+
+        // VAPID WebPush Aboneliğini Backend'e Eşitle
+        async function syncPushSubscription(registration) {
+            try {
+                const res = await fetch('/api/v1/push/vapid-public-key');
+                if (!res.ok) return;
+                const { public_key } = await res.json();
+                if (!public_key) return;
+
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(public_key)
+                });
+
+                await fetch('/api/v1/push/subscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                    },
+                    body: JSON.stringify(subscription)
+                });
+            } catch (e) {
+                console.log('WebPush eşitleme:', e);
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+    </script>
 </body>
 </html>
 

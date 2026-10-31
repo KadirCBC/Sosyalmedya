@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -196,6 +197,26 @@ class User extends Authenticatable
     public function receivedFollows(): HasMany
     {
         return $this->hasMany(Follow::class, 'following_id');
+    }
+
+    /**
+     * Kullanıcının yerel itibar ve rozet bilgisi.
+     *
+     * @return HasOne<Reputation>
+     */
+    public function reputation(): HasOne
+    {
+        return $this->hasOne(Reputation::class);
+    }
+
+    /**
+     * Kullanıcının itibar puan hareketleri.
+     *
+     * @return HasMany<ReputationLog>
+     */
+    public function reputationLogs(): HasMany
+    {
+        return $this->hasMany(ReputationLog::class);
     }
 }
 

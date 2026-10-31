@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\AdAdminController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ModerationController;
+use App\Http\Controllers\Web\AdWizardController;
 use App\Http\Controllers\Web\FeedWebController;
 use App\Http\Controllers\Web\SeoController;
 use App\Http\Middleware\EnsureAdminOrModerator;
@@ -25,6 +26,15 @@ Route::get('/posts/{id}', [FeedWebController::class, 'showPost'])->name('posts.s
 Route::get('/yerel/{citySlug}/{districtSlug}', [SeoController::class, 'localLandingPage'])->name('seo.district');
 Route::get('/posts/{id}/og-image', [SeoController::class, 'ogImage'])->name('posts.og-image');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
+
+// Esnaf Self-Service Reklam Sihirbazı Rotaları
+Route::prefix('ads')->controller(AdWizardController::class)->group(function () {
+    Route::get('create', 'create')->name('ads.create');
+    Route::post('/', 'store')->name('ads.store');
+    Route::get('calculate-reach', 'calculateReach')->name('ads.calculate-reach');
+    Route::get('success/{id}', 'success')->name('ads.success');
+    Route::get('mock-paytr-iframe/{id}', 'mockIframe')->name('ads.mock-iframe');
+});
 
 // Yönetim ve Moderasyon Paneli Rotaları
 Route::prefix('admin')->middleware(['auth', EnsureAdminOrModerator::class])->group(function () {

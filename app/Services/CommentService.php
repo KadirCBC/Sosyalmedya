@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\PostInteractedNotification;
 use App\Services\Audit\ActivityLogService;
 use App\Services\Moderation\ContentFilterService;
+use App\Services\Reputation\ReputationService;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,8 @@ class CommentService
 {
     public function __construct(
         protected ContentFilterService $contentFilterService,
-        protected ActivityLogService $activityLogService
+        protected ActivityLogService $activityLogService,
+        protected ReputationService $reputationService
     ) {}
     /**
      * Belirli bir gönderiye ait yorumları (veya bir yorumun yanıtlarını) cursor pagination ile getirir.
@@ -96,7 +98,13 @@ class CommentService
             $parentComment->user->notify(new PostInteractedNotification($user, $post, 'comment', $comment->content));
         }
 
-        return $comment->load('user:id,name,username,avatar_path');
+        // Yerel İtibar: Yorumla katkı puanı ekle (+1 Puan)
+        $this->reputationService->awardCommentCreated($user->id);
+
+        return $comment->load([
+            'user:id,name,username,avatar_path',
+            'user.reputation',
+        ]);
     }
 
     /**

@@ -36,3 +36,4 @@ class SendWebPushNotificationJob implements ShouldQueue
         $webPushService->executePush($this->subscription, $this->payload);
     }
 }
+

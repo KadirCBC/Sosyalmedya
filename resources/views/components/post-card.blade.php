@@ -66,6 +66,8 @@
                     <span class="text-xs text-slate-500 dark:text-neutral-400">
                         {{ '@' . ($post['user']['username'] ?? 'kullanici') }}
                     </span>
+                    <!-- Yerel İtibar ve Seviye Rozeti -->
+                    <x-reputation-badge :reputation="$post['user']['reputation'] ?? null" />
                     <span class="text-xs text-slate-400 dark:text-neutral-500">·</span>
                     <time class="text-xs text-slate-500 dark:text-neutral-400">
                         {{ $post['created_at_human'] ?? 'Şimdi' }}

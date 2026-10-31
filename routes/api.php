@@ -6,9 +6,16 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\FeedController;
+use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PaymentWebhookController;
 use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Middleware\IpSpamDefenseMiddleware;
+use App\Http\Middleware\ThrottleInteractions;
+use App\Http\Middleware\ThrottlePostCreation;
+use App\Http\Middleware\TrustCloudflareProxies;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,7 +24,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware([TrustCloudflareProxies::class, IpSpamDefenseMiddleware::class])->group(function () {
 
     // Kimlik Doğrulama Rotaları
     Route::prefix('auth')->controller(AuthController::class)->group(function () {
@@ -42,13 +49,18 @@ Route::prefix('v1')->group(function () {
         });
     });
 
+    // Yerel İtibar & Haftanın Komşuları Liderlik Tablosu
+    Route::get('locations/{locationId}/leaderboard', [LeaderboardController::class, 'index'])->name('locations.leaderboard');
+
     // Gönderi (Post) ve Etkileşim Rotaları
     Route::prefix('posts')->controller(PostController::class)->group(function () {
         Route::get('{id}', 'show');
 
         Route::middleware('auth:sanctum')->group(function () {
-            Route::post('/', 'store');
-            Route::post('{id}/like', 'toggleLike');
+            // Gönderi Paylaşma: Dakikada max 3 gönderi
+            Route::post('/', 'store')->middleware(ThrottlePostCreation::class);
+            // Beğeni: Dakikada max 20 etkileşim
+            Route::post('{id}/like', 'toggleLike')->middleware(ThrottleInteractions::class);
         });
     });
 
@@ -57,7 +69,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/', 'index');
 
         Route::middleware('auth:sanctum')->group(function () {
-            Route::post('/', 'store');
+            // Yorum Yapma: Dakikada max 20 etkileşim
+            Route::post('/', 'store')->middleware(ThrottleInteractions::class);
         });
     });
 
@@ -73,6 +86,16 @@ Route::prefix('v1')->group(function () {
         Route::post('read-all', 'markAllAsRead');
     });
 
+    // WebPush ve PWA Bildirim Abonelik Rotaları
+    Route::prefix('push')->controller(PushSubscriptionController::class)->group(function () {
+        Route::get('vapid-public-key', 'getVapidPublicKey');
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('subscribe', 'subscribe');
+            Route::post('unsubscribe', 'unsubscribe');
+        });
+    });
+
     // Şikayet ve Moderasyon Rotaları (5651 & İhlal Bildirimi)
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('reports', [ReportController::class, 'store']);
@@ -82,5 +105,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/', 'store');
             Route::delete('/', 'destroy');
         });
+    });
+
+    // Ödeme Webhook Rotaları (PayTR Asenkron Callback)
+    Route::prefix('payment')->group(function () {
+        Route::post('paytr/callback', [PaymentWebhookController::class, 'payTrCallback'])->name('payment.paytr.callback');
     });
 });
