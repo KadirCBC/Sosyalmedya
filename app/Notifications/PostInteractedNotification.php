@@ -7,6 +7,7 @@ namespace App\Notifications;
 use App\Models\Post;
 use App\Models\User;
 use App\Services\MediaService;
+use App\Services\Push\WebPushService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -47,13 +48,25 @@ class PostInteractedNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Veritabanı bildirimi verisi.
+     * Veritabanı bildirimi verisi ve WebPush kilit ekranı tetiklemesi.
      *
      * @return array<string, mixed>
      */
     public function toDatabase(object $notifiable): array
     {
-        return $this->formatNotificationData();
+        $data = $this->formatNotificationData();
+
+        // Kullanıcının kayıtlı telefon veya masaüstü WebPush cihazlarına anlık bildirim fırlat
+        if ($notifiable instanceof User) {
+            app(WebPushService::class)->notifyUser(
+                user: $notifiable,
+                title: 'Meydan Bildirimi',
+                body: (string) $data['message'],
+                url: url("/posts/{$this->post->id}")
+            );
+        }
+
+        return $data;
     }
 
     /**

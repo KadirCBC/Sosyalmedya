@@ -116,6 +116,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Kullanıcının WebPush tarayıcı bildirim abonelikleri.
+     *
+     * @return HasMany<PushSubscription>
+     */
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
+
+    /**
      * Kullanıcının paylaştığı gönderiler.
      *
      * @return HasMany<Post>

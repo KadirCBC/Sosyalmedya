@@ -2,7 +2,7 @@
     :title="$ogTitle"
     :ogTitle="$ogTitle"
     :ogDescription="$ogDescription"
-    :ogImage="$ogImage"
+    :ogImage="route('posts.og-image', $post['id'])"
     :ogUrl="$ogUrl"
     ogType="article">
 

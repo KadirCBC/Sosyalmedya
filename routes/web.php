@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdAdminController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Web\FeedWebController;
+use App\Http\Controllers\Web\SeoController;
 use App\Http\Middleware\EnsureAdminOrModerator;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [FeedWebController::class, 'index'])->name('home');
 Route::get('/feed', [FeedWebController::class, 'index'])->name('feed');
 Route::get('/posts/{id}', [FeedWebController::class, 'showPost'])->name('posts.show');
+
+// Dinamik SEO ve Sosyal Paylaşım Rotaları
+Route::get('/yerel/{citySlug}/{districtSlug}', [SeoController::class, 'localLandingPage'])->name('seo.district');
+Route::get('/posts/{id}/og-image', [SeoController::class, 'ogImage'])->name('posts.og-image');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 // Yönetim ve Moderasyon Paneli Rotaları
 Route::prefix('admin')->middleware(['auth', EnsureAdminOrModerator::class])->group(function () {

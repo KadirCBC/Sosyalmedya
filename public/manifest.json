@@ -1,0 +1,42 @@
+{
+  "name": "Meydan - Yerel ve Genel Sosyal Ağ",
+  "short_name": "Meydan",
+  "description": "Mahallende ve Türkiye genelinde neler olup bittiğini anında öğren ve paylaş.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "categories": ["social", "news"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mahallem (Yerel)",
+      "short_name": "Mahallem",
+      "description": "Bulunduğun ilçenin canlı akışına git",
+      "url": "/?tab=local",
+      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Genel Akış",
+      "short_name": "Genel",
+      "description": "Türkiye geneli en popüler paylaşımlar",
+      "url": "/?tab=general",
+      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+    }
+  ]
+}
