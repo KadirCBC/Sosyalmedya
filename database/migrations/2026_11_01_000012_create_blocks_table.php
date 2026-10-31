@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('blocks', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->cascadeOnDelete();
+            $table->foreignId('blocked_user_id')
+                ->constrained('users')
+                ->cascadeOnDelete();
+            $table->timestamps();
+
+            // Bir kullanıcının aynı kişiyi birden fazla kez engellemesini önler
+            $table->unique(['user_id', 'blocked_user_id'], 'uidx_blocks_user_blocked');
+
+            // Çift yönlü engelleme sorguları (beni engelleyenler) için ters indeks
+            $table->index(['blocked_user_id', 'user_id'], 'idx_blocks_blocked_user');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('blocks');
+    }
+};
+
