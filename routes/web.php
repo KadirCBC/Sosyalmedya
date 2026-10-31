@@ -6,7 +6,10 @@ use App\Http\Controllers\Admin\AdAdminController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Web\AdWizardController;
+use App\Http\Controllers\Web\BusinessWebController;
+use App\Http\Controllers\Web\EmergencyWebController;
 use App\Http\Controllers\Web\FeedWebController;
+use App\Http\Controllers\Web\MarketplaceWebController;
 use App\Http\Controllers\Web\SeoController;
 use App\Http\Middleware\EnsureAdminOrModerator;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +37,28 @@ Route::prefix('ads')->controller(AdWizardController::class)->group(function () {
     Route::get('calculate-reach', 'calculateReach')->name('ads.calculate-reach');
     Route::get('success/{id}', 'success')->name('ads.success');
     Route::get('mock-paytr-iframe/{id}', 'mockIframe')->name('ads.mock-iframe');
+});
+
+// Mahalle Pazarı Rotaları
+Route::prefix('marketplace')->controller(MarketplaceWebController::class)->group(function () {
+    Route::get('/', 'index')->name('marketplace.index');
+    Route::get('/create', 'create')->name('marketplace.create');
+    Route::get('/{id}', 'show')->name('marketplace.show');
+});
+
+// Acil Durum Ağı Rotaları
+Route::prefix('emergency')->controller(EmergencyWebController::class)->group(function () {
+    Route::get('/create', 'create')->name('emergency.create');
+    Route::get('/{id}', 'show')->name('emergency.show');
+});
+
+// Esnaf İşletme Sayfası Rotaları
+Route::prefix('business')->controller(BusinessWebController::class)->group(function () {
+    Route::get('/', 'index')->name('business.index');
+    Route::get('/register', 'register')->name('business.register');
+    Route::get('/{id}', 'show')->name('business.show');
+    Route::get('/{id}/subscription', 'subscription')->name('business.subscription');
+    Route::get('/{id}/subscription/mock', 'subscriptionMock')->name('business.subscription.mock');
 });
 
 // Yönetim ve Moderasyon Paneli Rotaları

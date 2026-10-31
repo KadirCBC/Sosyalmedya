@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BusinessProfile;
 use App\Services\Ad\AdWizardService;
 use App\Services\Audit\ActivityLogService;
+use App\Services\Business\BusinessSubscriptionService;
 use App\Services\Payment\PayTrPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -39,19 +41,40 @@ class PaymentWebhookController extends Controller
         $totalAmount = ((float) ($postData['total_amount'] ?? 0)) / 100; // Kuruş -> TL
 
         if ($status === 'success') {
-            // Reklamı anında aktifleştir ve esnafa SMS at
-            $ad = $this->adWizardService->activateAdAfterPayment($merchantOid, $totalAmount);
+            if (str_starts_with($merchantOid, 'BIZ_SUB_')) {
+                // 1. Esnaf SaaS Abonelik Ödemesi (Aylık Paket)
+                $parts = explode('_', $merchantOid);
+                $profileId = (int) ($parts[2] ?? 0);
+                /** @var BusinessProfile|null $profile */
+                $profile = BusinessProfile::query()->find($profileId);
 
-            // 5651 Sayılı Kanun mali işlem logu
-            if ($ad) {
-                $this->activityLogService->log(
-                    request: $request,
-                    action: 'ad_payment_success',
-                    user: $ad->user,
-                    content: "PayTR Ödeme Başarılı: {$totalAmount} TL - {$merchantOid}",
-                    targetType: \App\Models\Ad::class,
-                    targetId: $ad->id
-                );
+                if ($profile) {
+                    app(BusinessSubscriptionService::class)->activateSubscription($profile, $totalAmount);
+
+                    $this->activityLogService->log(
+                        request: $request,
+                        action: 'business_subscription_payment_success',
+                        user: $profile->user,
+                        content: "PayTR Esnaf Aboneliği Başarılı: {$totalAmount} TL - {$merchantOid}",
+                        targetType: BusinessProfile::class,
+                        targetId: $profile->id
+                    );
+                }
+            } else {
+                // 2. Reklamı anında aktifleştir ve esnafa SMS at
+                $ad = $this->adWizardService->activateAdAfterPayment($merchantOid, $totalAmount);
+
+                // 5651 Sayılı Kanun mali işlem logu
+                if ($ad) {
+                    $this->activityLogService->log(
+                        request: $request,
+                        action: 'ad_payment_success',
+                        user: $ad->user,
+                        content: "PayTR Ödeme Başarılı: {$totalAmount} TL - {$merchantOid}",
+                        targetType: \App\Models\Ad::class,
+                        targetId: $ad->id
+                    );
+                }
             }
         } else {
             Log::info("PayTR Ödeme Başarısız: {$merchantOid} - Hata: " . ($postData['failed_reason_msg'] ?? ''));

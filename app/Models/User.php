@@ -218,5 +218,23 @@ class User extends Authenticatable
     {
         return $this->hasMany(ReputationLog::class);
     }
+
+    /**
+     * Esnaf kullanıcısının işletme profili.
+     *
+     * @return HasOne<BusinessProfile>
+     */
+    public function businessProfile(): HasOne
+    {
+        return $this->hasOne(BusinessProfile::class);
+    }
+
+    /**
+     * Kullanıcının doğrulanmış bir işletmeye sahip olup olmadığını kontrol eder.
+     */
+    public function isVerifiedMerchant(): bool
+    {
+        return $this->businessProfile !== null && $this->businessProfile->is_verified;
+    }
 }
 

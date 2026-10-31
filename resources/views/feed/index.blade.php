@@ -159,7 +159,13 @@
                     <!-- Esnaf Reklam Sihirbazı Butonu -->
                     <a href="{{ route('ads.create') }}"
                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors">
-                        <span>⚡ Reklam Ver</span>
+                        <span>⚡ Reklam</span>
+                    </a>
+                    <!-- Acil Durum Bildir Butonu -->
+                    <a href="{{ route('emergency.create') }}"
+                       class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 transition-colors"
+                       title="Afet, kan veya kayıp ilanı bildir">
+                        <span>🚨 Acil</span>
                     </a>
                     <!-- Gece / Gündüz Modu Butonu -->
                     <button @click="darkMode = !darkMode" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-500 dark:text-neutral-400 transition-colors">
@@ -190,8 +196,25 @@
                     </span>
                     <div x-show="activeTab === 'general'" class="absolute bottom-0 inset-x-12 h-1 bg-blue-600 dark:bg-blue-500 rounded-full"></div>
                 </button>
+
+                <!-- 3. Sekme: Mahalle Pazarı -->
+                <a href="{{ route('marketplace.index') }}"
+                   class="flex-1 py-3 text-sm font-bold text-slate-400 dark:text-neutral-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-neutral-900/40 transition-colors flex items-center justify-center gap-1.5">
+                    <span>🛍️</span>
+                    <span>Pazar</span>
+                </a>
+
+                <!-- 4. Sekme: Esnaf Rehberi -->
+                <a href="{{ route('business.index') }}"
+                   class="flex-1 py-3 text-sm font-bold text-slate-400 dark:text-neutral-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-neutral-900/40 transition-colors flex items-center justify-center gap-1.5">
+                    <span>🏪</span>
+                    <span>Esnaf</span>
+                </a>
             </nav>
         </header>
+
+        <!-- 🚨 Kırmızı Akış: Sticky İlçe Acil Durum Uyarısı (Reklam ve Postlarca Bastırılamaz) -->
+        <x-emergency-banner :locationId="$locationId ?? 1" />
 
         <!-- 2. Hızlı Gönderi Paylaşım Kutusu (Compose Box) -->
         <section class="p-4 border-b border-slate-200 dark:border-neutral-800 bg-white dark:bg-black">
@@ -401,6 +424,11 @@
                             image="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80"
                             ctaText="Konuma Git"
                             ctaUrl="https://maps.google.com" />
+                    </template>
+
+                    <!-- Her 6 gönderide bir Mahalle Pazarı Yakınındaki İlanlar Karuseli yerleştir -->
+                    <template x-if="(index + 1) === 2 || (index + 1) % 6 === 0">
+                        <x-marketplace-carousel :locationId="$locationId ?? 1" :districtName="$districtName ?? 'Bölgeniz'" />
                     </template>
                 </div>
             </template>

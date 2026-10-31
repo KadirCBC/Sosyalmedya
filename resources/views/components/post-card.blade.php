@@ -66,6 +66,15 @@
                     <span class="text-xs text-slate-500 dark:text-neutral-400">
                         {{ '@' . ($post['user']['username'] ?? 'kullanici') }}
                     </span>
+                    <!-- Doğrulanmış Esnaf Rozeti -->
+                    @if(!empty($post['user']['is_verified_merchant']))
+                        <a href="{{ route('business.show', $post['user']['business_profile_id'] ?? 1) }}"
+                           class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-800"
+                           title="Doğrulanmış Mahalle Esnafı Profili">
+                            <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            <span>Doğrulanmış Esnaf</span>
+                        </a>
+                    @endif
                     <!-- Yerel İtibar ve Seviye Rozeti -->
                     <x-reputation-badge :reputation="$post['user']['reputation'] ?? null" />
                     <span class="text-xs text-slate-400 dark:text-neutral-500">·</span>

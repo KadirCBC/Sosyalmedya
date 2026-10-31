@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BlockController;
+use App\Http\Controllers\Api\BusinessProfileController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\EmergencyAlertController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\LeaderboardController;
+use App\Http\Controllers\Api\MarketplaceController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentWebhookController;
 use App\Http\Controllers\Api\PostController;
@@ -51,6 +55,50 @@ Route::prefix('v1')->middleware([TrustCloudflareProxies::class, IpSpamDefenseMid
 
     // Yerel İtibar & Haftanın Komşuları Liderlik Tablosu
     Route::get('locations/{locationId}/leaderboard', [LeaderboardController::class, 'index'])->name('locations.leaderboard');
+
+    // Mahalle Pazarı (Marketplace) Rotaları
+    Route::prefix('marketplace')->controller(MarketplaceController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('/carousel', 'carousel');
+        Route::get('/{id}', 'show');
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/', 'store');
+            Route::post('/{id}/status', 'updateStatus');
+        });
+    });
+
+    // Güvenli Sohbet / Mesajlaşma Rotaları
+    Route::prefix('chat')->controller(ChatController::class)->middleware('auth:sanctum')->group(function () {
+        Route::get('conversations', 'conversations');
+        Route::post('start/{itemId}', 'start');
+        Route::get('conversations/{conversationId}/messages', 'messages');
+        Route::post('conversations/{conversationId}/messages', 'sendMessage');
+    });
+
+    // Acil Durum Ağı (Kırmızı Akış) Rotaları
+    Route::prefix('emergency')->controller(EmergencyAlertController::class)->group(function () {
+        Route::get('alerts', 'index');
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('alerts', 'store');
+            Route::post('alerts/{id}/verify', 'verify');
+            Route::post('alerts/{id}/resolve', 'resolve');
+        });
+    });
+
+    // Esnaf İşletme Sayfası (Business Profiles) Rotaları
+    Route::prefix('business')->controller(BusinessProfileController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('/{id}', 'show');
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/', 'store');
+            Route::post('/{id}/catalog', 'addCatalogItem');
+            Route::delete('/catalog/{itemId}', 'deleteCatalogItem');
+            Route::post('/{id}/reviews', 'addReview');
+            Route::post('/{id}/subscribe', 'subscribe');
+        });
+    });
 
     // Gönderi (Post) ve Etkileşim Rotaları
     Route::prefix('posts')->controller(PostController::class)->group(function () {
