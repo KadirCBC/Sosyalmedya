@@ -1,0 +1,22 @@
+#!/usr/bin/env php
+<?php
+
+use Illuminate\Contracts\Console\Kernel;
+
+define('LARAVEL_START', microtime(true));
+
+// Register the Composer autoloader...
+if (file_exists(__DIR__.'/vendor/autoload.php')) {
+    require __DIR__.'/vendor/autoload.php';
+} else {
+    fwrite(STDERR, "Hata: 'vendor/autoload.php' bulunamadı. Lütfen önce 'composer install' komutunu çalıştırınız.\n");
+    exit(1);
+}
+
+/** @var \Illuminate\Foundation\Application $app */
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+$status = $app->handleCommand(new \Symfony\Component\Console\Input\ArgvInput);
+
+exit($status);
+

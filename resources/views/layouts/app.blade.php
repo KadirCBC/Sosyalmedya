@@ -29,10 +29,10 @@
     <meta name="twitter:description" content="{{ $ogDescription ?? 'Mahallende ve genel akışta neler olup bittiğini anında öğren.' }}">
     <meta name="twitter:image" content="{{ $ogImage ?? 'https://pub-your-id.r2.dev/assets/meydan-og-banner.jpg' }}">
 
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS (cPanel CDN - Derleme/Build gerektirmez) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -42,22 +42,10 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
                     },
-                    colors: {
-                        primary: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                        },
-                        dark: {
-                            base: '#000000',
-                            card: '#0c0f14',
-                            border: '#1e2430',
-                            hover: '#141a24'
-                        }
+                    boxShadow: {
+                        'glow-primary': '0 4px 24px -2px rgba(37, 99, 235, 0.35)',
                     }
                 }
             }
@@ -70,6 +58,54 @@
 
     <style>
         [x-cloak] { display: none !important; }
+
+        body {
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 85% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 45%),
+                radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: #0f172a;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        html.dark body {
+            background-color: #080c14;
+            background-image: 
+                radial-gradient(circle at 10% 15%, rgba(37, 99, 235, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 90% 25%, rgba(99, 102, 241, 0.10) 0%, transparent 50%),
+                radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.06) 0%, transparent 55%);
+            background-attachment: fixed;
+            color: #f8fafc;
+        }
+
+        .elite-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        html.dark .elite-card {
+            background: rgba(15, 22, 36, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .elite-card-hover:hover {
+            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.35);
+            box-shadow: 0 14px 35px -8px rgba(37, 99, 235, 0.12);
+        }
+
+        html.dark .elite-card-hover:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+            box-shadow: 0 24px 50px -15px rgba(0, 0, 0, 0.8), 0 0 35px -5px rgba(37, 99, 235, 0.2);
+        }
+
         /* Mobil yumuşak kaydırma ve no-scrollbar */
         html { scroll-behavior: smooth; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -83,11 +119,41 @@
         .animate-heart { animation: heartPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     </style>
 </head>
-<body class="h-full flex flex-col font-sans" x-data="{ darkMode: true }" :class="{ 'dark': darkMode }">
+<body class="min-h-screen flex flex-col font-sans"
+      x-data="{
+          darkMode: false,
+          init() {
+              const saved = localStorage.getItem('meydan_theme');
+              if (saved) {
+                  this.darkMode = saved === 'dark';
+              } else {
+                  this.darkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+              }
+              this.applyTheme();
+          },
+          setTheme(dark) {
+              this.darkMode = dark;
+              localStorage.setItem('meydan_theme', this.darkMode ? 'dark' : 'light');
+              this.applyTheme();
+          },
+          toggleTheme() {
+              this.setTheme(!this.darkMode);
+          },
+          applyTheme() {
+              if (this.darkMode) {
+                  document.documentElement.classList.add('dark');
+              } else {
+                  document.documentElement.classList.remove('dark');
+              }
+          }
+      }">
 
-    <!-- Ana Çerçeve (Mobile-First / Max-w-2xl merkezli veya genişletilebilir) -->
-    <div class="min-h-full flex justify-center bg-slate-100 dark:bg-black">
-        <main class="w-full {{ $maxWidth ?? 'max-w-[620px]' }} min-h-screen bg-white dark:bg-black border-x border-slate-200 dark:border-neutral-800 flex flex-col pb-20 sm:pb-8 shadow-sm">
+    <!-- Üst İnce Parlak Ambient Çizgi -->
+    <div class="h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 w-full sticky top-0 z-50"></div>
+
+    <!-- Ana Çerçeve (Full-Width Responsive Container) -->
+    <div class="min-h-screen flex-1 flex flex-col w-full">
+        <main class="w-full max-w-[1640px] mx-auto px-4 sm:px-6 lg:px-10 flex-1 flex flex-col pb-24 lg:pb-8">
             {{ $slot ?? '' }}
             @yield('content')
         </main>
